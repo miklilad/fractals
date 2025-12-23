@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Vertex shader source - positions and colors
 const vertexShaderSource = `
@@ -97,11 +97,11 @@ const initWebGL = (canvas: HTMLCanvasElement): void => {
   // Triangle vertices (x, y) in clip space
   const positions = new Float32Array([
     0.0,
-    0.7, // top vertex
-    -0.6,
-    -0.5, // bottom left vertex
-    0.6,
-    -0.5, // bottom right vertex
+    3.0, // top vertex
+    -3.0,
+    -3.0, // bottom left vertex
+    3.0,
+    -3.0, // bottom right vertex
   ]);
 
   // RGB colors for each vertex (red, green, blue)
@@ -146,10 +146,31 @@ const initWebGL = (canvas: HTMLCanvasElement): void => {
 export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+
   useEffect(() => {
-    if (!canvasRef.current) return;
-    initWebGL(canvasRef.current);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const resizeObserver = new ResizeObserver(entries => {
+      const entry = entries[0];
+      if (entry) {
+        setCanvasSize({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height,
+        });
+      }
+    });
+
+    resizeObserver.observe(canvas);
+    return () => resizeObserver.disconnect();
   }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    initWebGL(canvas);
+  }, [canvasSize]);
 
   return (
     <canvas id="canvas" className="h-screen w-screen" ref={canvasRef}></canvas>
