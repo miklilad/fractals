@@ -1,0 +1,17 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+body {
+  background-color: #242424;
+}
+
+
+@layer base {
+  * {
+    
+  }
+  body {
+  }
+}
