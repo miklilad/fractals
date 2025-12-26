@@ -36,6 +36,54 @@ const calculateTouchDistance = (
   return Math.sqrt(dx * dx + dy * dy);
 };
 
+// Pure function to convert screen coordinates to world coordinates
+const screenToWorld = (
+  screenPos: { x: number; y: number },
+  position: { x: number; y: number; z: number },
+  canvasSize: { width: number; height: number }
+): { x: number; y: number } => {
+  const ratio = canvasSize.width / canvasSize.height;
+  const normalizedX = screenPos.x / canvasSize.width;
+  const normalizedY = 1 - screenPos.y / canvasSize.height; // Invert y axis
+
+  return {
+    x: position.x - position.z + normalizedX * position.z * 2,
+    y: (position.y - position.z + normalizedY * position.z * 2) / ratio,
+  };
+};
+
+// Pure function to calculate new position when zooming at a specific point
+const calculateZoomAtPoint = (
+  currentPosition: { x: number; y: number; z: number },
+  cursorScreen: { x: number; y: number },
+  scrollDelta: number,
+  canvasSize: { width: number; height: number }
+): { x: number; y: number; z: number } => {
+  // Get world coordinates at cursor before zoom
+  const worldPosBefore = screenToWorld(
+    cursorScreen,
+    currentPosition,
+    canvasSize
+  );
+
+  // Calculate new zoom level
+  const newZ = calculateNewZoom(currentPosition.z, scrollDelta);
+
+  // Calculate what the new position should be to keep the same world point under cursor
+  const ratio = canvasSize.width / canvasSize.height;
+  const normalizedX = cursorScreen.x / canvasSize.width;
+  const normalizedY = 1 - cursorScreen.y / canvasSize.height; // Invert y axis
+
+  const newX = worldPosBefore.x - normalizedX * newZ * 2 + newZ;
+  const newY = worldPosBefore.y * ratio + newZ - normalizedY * newZ * 2;
+
+  return {
+    x: newX,
+    y: newY,
+    z: newZ,
+  };
+};
+
 interface UseMouveMovementProps {
   setPosition: React.Dispatch<
     React.SetStateAction<{
@@ -109,14 +157,23 @@ export const useMouseDragMovement = ({
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
 
+      // Get cursor position relative to canvas
+      const rect = canvas.getBoundingClientRect();
+      const cursorScreen = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+
       // Normalize scroll delta (different browsers/devices have different scales)
       // Scroll down (positive deltaY) zooms in, scroll up (negative deltaY) zooms out
       const scrollDelta = Math.sign(e.deltaY) * 0.5;
 
-      setPosition(currentPosition => ({
-        ...currentPosition,
-        z: calculateNewZoom(currentPosition.z, scrollDelta),
-      }));
+      setPosition(currentPosition =>
+        calculateZoomAtPoint(currentPosition, cursorScreen, scrollDelta, {
+          width: canvas.width,
+          height: canvas.height,
+        })
+      );
     };
 
     canvas.addEventListener("wheel", handleWheel, { passive: false });
@@ -156,14 +213,23 @@ export const useMouseDragMovement = ({
         const touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY };
         const currentDistance = calculateTouchDistance(touch1, touch2);
 
+        // Calculate center point between two fingers
+        const rect = canvas.getBoundingClientRect();
+        const centerScreen = {
+          x: (touch1.x + touch2.x) / 2 - rect.left,
+          y: (touch1.y + touch2.y) / 2 - rect.top,
+        };
+
         const distanceRatio = currentDistance / lastTouchDistance.current;
         // Pinch in (distanceRatio < 1) zooms in, pinch out (distanceRatio > 1) zooms out
         const zoomDelta = (1 - distanceRatio) * 4; // Amplify the zoom effect
 
-        setPosition(currentPosition => ({
-          ...currentPosition,
-          z: calculateNewZoom(currentPosition.z, zoomDelta),
-        }));
+        setPosition(currentPosition =>
+          calculateZoomAtPoint(currentPosition, centerScreen, zoomDelta, {
+            width: canvas.width,
+            height: canvas.height,
+          })
+        );
 
         lastTouchDistance.current = currentDistance;
       } else if (

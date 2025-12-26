@@ -90,19 +90,6 @@ const initWebGL = (canvas: HTMLCanvasElement) => {
   //   -1.0, // bottom right vertex
   // ]);
 
-  // // RGB colors for each vertex (red, green, blue)
-  // const colors = new Float32Array([
-  //   1.0,
-  //   0.5,
-  //   0.0, // orange
-  //   0.5,
-  //   1.0,
-  //   0.0, // green
-  //   0.0,
-  //   0.5,
-  //   1.0, // blue
-  // ]);
-
   const positionBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
