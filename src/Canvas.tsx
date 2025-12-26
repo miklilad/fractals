@@ -181,7 +181,7 @@ export const Canvas = () => {
   return (
     <div className="relative h-screen w-screen">
       <canvas id="canvas" className="h-full w-full" ref={canvasRef} />
-      <div className="bg-black-100/10 absolute top-0 left-0 p-4 text-white">
+      <div className="absolute top-0 left-0 bg-black/50 p-4 text-white">
         <p>FPS: {fps}</p>
         <p>x: {position.x.toFixed(majorDigits)}</p>
         <p>y: {position.y.toFixed(majorDigits)}</p>
