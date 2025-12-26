@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import vertexShaderSource from "./shaders/vertex.vert?raw";
 import fragmentShaderSource from "./shaders/fragment.frag?raw";
-import { useMouseDragMovement } from "./hooks/useMouveMovement";
+import { useMouseDragMovement } from "./hooks/useMouseMovement";
 
 // Pure function to create and compile a shader
 const createShader = (
@@ -154,7 +154,7 @@ export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<ReturnType<typeof initWebGL>>(null);
 
-  const [position, setPosition] = useState({ x: -0.5, y: 0, z: 0.5 });
+  const [position, setPosition] = useState({ x: -0.5, y: 0, z: 2 });
 
   // Initialize WebGL only once
   useEffect(() => {
