@@ -181,11 +181,9 @@ export const Canvas = () => {
       <canvas id="canvas" className="h-full w-full" ref={canvasRef} />
       <div className="bg-black-100/10 absolute top-0 left-0 p-4 text-white">
         <p>Screen position:</p>
-        x: {position.x.toFixed(majorDigits)}
-        <br />
-        y: {position.y.toFixed(majorDigits)}
-        <br />
-        z: {position.z.toFixed(majorDigits)}
+        <p>x: {position.x.toFixed(majorDigits)}</p>
+        <p>y: {position.y.toFixed(majorDigits)}</p>
+        <p>z: {position.z.toFixed(majorDigits)}</p>
       </div>
     </div>
   );
