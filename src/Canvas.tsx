@@ -1,26 +1,28 @@
 import { useEffect, useRef, useState } from "react";
+import vertexShaderSource from "./shaders/vertex.vert?raw";
+import fragmentShaderSource from "./shaders/fragment.frag?raw";
 
-// Vertex shader source - positions and colors
-const vertexShaderSource = `
-  attribute vec2 a_position;
-  attribute vec3 a_color;
-  varying vec3 v_color;
-  
-  void main() {
-    gl_Position = vec4(a_position, 0.0, 1.0);
-    v_color = a_color;
-  }
-`;
+// // Vertex shader source - positions and colors
+// const vertexShaderSource = `
+//   attribute vec2 a_position;
+//   attribute vec3 a_color;
+//   varying vec3 v_color;
 
-// Fragment shader source - interpolates colors
-const fragmentShaderSource = `
-  precision mediump float;
-  varying vec3 v_color;
-  
-  void main() {
-    gl_FragColor = vec4(v_color, 1.0);
-  }
-`;
+//   void main() {
+//     gl_Position = vec4(a_position, 0.0, 1.0);
+//     v_color = a_color;
+//   }
+// `;
+
+// // Fragment shader source - interpolates colors
+// const fragmentShaderSource = `
+//   precision mediump float;
+//   varying vec3 v_color;
+
+//   void main() {
+//     gl_FragColor = vec4(v_color, 1.0);
+//   }
+// `;
 
 // Pure function to create and compile a shader
 const createShader = (
@@ -68,17 +70,12 @@ const createProgram = (
 };
 
 // Initialize WebGL with shaders and buffers
-const initWebGL = (canvas: HTMLCanvasElement): void => {
+const initWebGL = (canvas: HTMLCanvasElement) => {
   const gl = canvas.getContext("webgl");
   if (!gl) {
     console.error("WebGL not supported");
     return;
   }
-
-  // Set canvas size to match display size
-  canvas.width = canvas.clientWidth;
-  canvas.height = canvas.clientHeight;
-  gl.viewport(0, 0, canvas.width, canvas.height);
 
   // Create shaders
   const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
@@ -104,61 +101,97 @@ const initWebGL = (canvas: HTMLCanvasElement): void => {
     -3.0, // bottom right vertex
   ]);
 
-  // RGB colors for each vertex (red, green, blue)
-  const colors = new Float32Array([
-    1.0,
-    0.5,
-    0.0, // orange
-    0.5,
-    1.0,
-    0.0, // green
-    0.0,
-    0.5,
-    1.0, // blue
-  ]);
+  // // Triangle vertices (x, y) in clip space
+  // const positions = new Float32Array([
+  //   0.0,
+  //   1.0, // top vertex
+  //   -1.0,
+  //   -1.0, // bottom left vertex
+  //   1.0,
+  //   -1.0, // bottom right vertex
+  // ]);
 
-  // Create and bind position buffer
+  // // RGB colors for each vertex (red, green, blue)
+  // const colors = new Float32Array([
+  //   1.0,
+  //   0.5,
+  //   0.0, // orange
+  //   0.5,
+  //   1.0,
+  //   0.0, // green
+  //   0.0,
+  //   0.5,
+  //   1.0, // blue
+  // ]);
+
   const positionBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
 
+  gl.useProgram(program);
   const positionAttributeLocation = gl.getAttribLocation(program, "a_position");
   gl.enableVertexAttribArray(positionAttributeLocation);
   gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
-  // Create and bind color buffer
-  const colorBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+  // Return WebGL context and program info for later use
+  return {
+    gl,
+    program,
+    resolutionLocation: gl.getUniformLocation(program, "u_resolution"),
+  };
+};
 
-  const colorAttributeLocation = gl.getAttribLocation(program, "a_color");
-  gl.enableVertexAttribArray(colorAttributeLocation);
-  gl.vertexAttribPointer(colorAttributeLocation, 3, gl.FLOAT, false, 0, 0);
-
-  // Clear canvas and draw
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
-  gl.clear(gl.COLOR_BUFFER_BIT);
+const render = ({
+  context,
+  width,
+  height,
+}: {
+  context: {
+    gl: WebGLRenderingContext;
+    program: WebGLProgram;
+    resolutionLocation: WebGLUniformLocation | null;
+  };
+  width: number;
+  height: number;
+}) => {
+  const { gl, program, resolutionLocation } = context;
 
   gl.useProgram(program);
+  // Update viewport and resolution
+  gl.viewport(0, 0, width, height);
+  gl.uniform2fv(resolutionLocation, [width, height]);
+
+  // Clear and draw
+  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 };
 
 export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const contextRef = useRef<ReturnType<typeof initWebGL>>(null);
 
-  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
-
+  // Initialize WebGL only once
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    contextRef.current = initWebGL(canvas);
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const context = contextRef.current;
+    if (!canvas || !context) return;
 
     const resizeObserver = new ResizeObserver(entries => {
       const entry = entries[0];
+      console.log(entry);
       if (entry) {
-        setCanvasSize({
-          width: entry.contentRect.width,
-          height: entry.contentRect.height,
-        });
+        const width = entry.contentRect.width;
+        const height = entry.contentRect.height;
+        canvas.width = width;
+        canvas.height = height;
+        render({ context, width, height });
       }
     });
 
@@ -170,7 +203,7 @@ export const Canvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     initWebGL(canvas);
-  }, [canvasSize]);
+  }, []);
 
   return (
     <canvas id="canvas" className="h-screen w-screen" ref={canvasRef}></canvas>
