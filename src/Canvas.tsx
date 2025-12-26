@@ -1,28 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import vertexShaderSource from "./shaders/vertex.vert?raw";
 import fragmentShaderSource from "./shaders/fragment.frag?raw";
-
-// // Vertex shader source - positions and colors
-// const vertexShaderSource = `
-//   attribute vec2 a_position;
-//   attribute vec3 a_color;
-//   varying vec3 v_color;
-
-//   void main() {
-//     gl_Position = vec4(a_position, 0.0, 1.0);
-//     v_color = a_color;
-//   }
-// `;
-
-// // Fragment shader source - interpolates colors
-// const fragmentShaderSource = `
-//   precision mediump float;
-//   varying vec3 v_color;
-
-//   void main() {
-//     gl_FragColor = vec4(v_color, 1.0);
-//   }
-// `;
+import { useMouseDragMovement } from "./hooks/useMouveMovement";
 
 // Pure function to create and compile a shader
 const createShader = (
@@ -171,29 +150,11 @@ const render = ({
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 };
 
-// Pure function to calculate new position based on mouse delta
-const calculateNewPosition = (
-  currentPosition: { x: number; y: number; z: number },
-  mouseDelta: { x: number; y: number },
-  canvasSize: { width: number; height: number }
-): { x: number; y: number; z: number } => {
-  // Scale factor based on zoom level (z value) with dampening
-  const scaleFactor = currentPosition.z / canvasSize.width;
-
-  return {
-    x: currentPosition.x - mouseDelta.x * scaleFactor,
-    y: currentPosition.y + mouseDelta.y * scaleFactor, // Invert y for natural movement
-    z: currentPosition.z,
-  };
-};
-
 export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<ReturnType<typeof initWebGL>>(null);
 
   const [position, setPosition] = useState({ x: -0.5, y: 0, z: 2 });
-  const [isDragging, setIsDragging] = useState(false);
-  const lastMousePos = useRef<{ x: number; y: number } | null>(null);
 
   // Initialize WebGL only once
   useEffect(() => {
@@ -201,6 +162,8 @@ export const Canvas = () => {
     if (!canvas) return;
     contextRef.current = initWebGL(canvas);
   }, []);
+
+  useMouseDragMovement({ setPosition, canvasRef });
 
   // Handle resize and render
   useEffect(() => {
@@ -222,57 +185,6 @@ export const Canvas = () => {
     resizeObserver.observe(canvas);
     return () => resizeObserver.disconnect();
   }, [position]);
-
-  // Handle mouse interactions
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const handleMouseDown = (e: MouseEvent) => {
-      setIsDragging(true);
-      lastMousePos.current = { x: e.clientX, y: e.clientY };
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging || !lastMousePos.current) return;
-
-      const mouseDelta = {
-        x: e.clientX - lastMousePos.current.x,
-        y: e.clientY - lastMousePos.current.y,
-      };
-
-      setPosition(currentPosition =>
-        calculateNewPosition(currentPosition, mouseDelta, {
-          width: canvas.width,
-          height: canvas.height,
-        })
-      );
-
-      lastMousePos.current = { x: e.clientX, y: e.clientY };
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-      lastMousePos.current = null;
-    };
-
-    const handleMouseLeave = () => {
-      setIsDragging(false);
-      lastMousePos.current = null;
-    };
-
-    canvas.addEventListener("mousedown", handleMouseDown);
-    canvas.addEventListener("mousemove", handleMouseMove);
-    canvas.addEventListener("mouseup", handleMouseUp);
-    canvas.addEventListener("mouseleave", handleMouseLeave);
-
-    return () => {
-      canvas.removeEventListener("mousedown", handleMouseDown);
-      canvas.removeEventListener("mousemove", handleMouseMove);
-      canvas.removeEventListener("mouseup", handleMouseUp);
-      canvas.removeEventListener("mouseleave", handleMouseLeave);
-    };
-  }, [isDragging]);
 
   return (
     <canvas id="canvas" className="h-screen w-screen" ref={canvasRef}></canvas>
