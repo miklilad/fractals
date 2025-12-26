@@ -173,7 +173,20 @@ export const Canvas = () => {
     return () => resizeObserver.disconnect();
   }, [position]);
 
+  const majorDigits =
+    (/^0*/.exec(String(position.z).replace(".", ""))?.[0] || "").length + 2;
+
   return (
-    <canvas id="canvas" className="h-screen w-screen" ref={canvasRef}></canvas>
+    <div className="relative h-screen w-screen">
+      <canvas id="canvas" className="h-full w-full" ref={canvasRef} />
+      <div className="bg-black-100/10 absolute top-0 left-0 p-4 text-white">
+        <p>Screen position:</p>
+        x: {position.x.toFixed(majorDigits)}
+        <br />
+        y: {position.y.toFixed(majorDigits)}
+        <br />
+        z: {position.z.toFixed(majorDigits)}
+      </div>
+    </div>
   );
 };
