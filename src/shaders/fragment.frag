@@ -1,8 +1,23 @@
 precision mediump float;
 uniform vec2 u_resolution;
+uniform vec3 u_position;
+
+float map(float value, float min1, float max1, float min2, float max2) {
+  return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+}
+
+vec2 map(vec2 value, vec2 min1, vec2 max1, vec2 min2, vec2 max2) {
+  return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+}
 
 void main() {
-  vec2 coord = ((gl_FragCoord.xy - vec2(u_resolution.x / 1.7, 0.0)) / u_resolution.y - vec2(0.0, 0.5)) * 2.5;
+  float ratio = u_resolution.x / u_resolution.y;
+  vec2 coord = map(gl_FragCoord.xy, 
+                  vec2(0.0, 0.0), 
+                  u_resolution, 
+                  u_position.xy - u_position.z, 
+                  u_position.xy + u_position.z);
+  coord.y /= ratio;
   float color = 0.0;
   vec2 z = vec2(0.0, 0.0);
   for (int i = 0; i < 1000; i++) {

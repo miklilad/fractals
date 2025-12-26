@@ -137,29 +137,33 @@ const initWebGL = (canvas: HTMLCanvasElement) => {
   return {
     gl,
     program,
-    resolutionLocation: gl.getUniformLocation(program, "u_resolution"),
   };
 };
 
 const render = ({
   context,
+  position,
   width,
   height,
 }: {
   context: {
     gl: WebGLRenderingContext;
     program: WebGLProgram;
-    resolutionLocation: WebGLUniformLocation | null;
   };
+  position: { x: number; y: number; z: number };
   width: number;
   height: number;
 }) => {
-  const { gl, program, resolutionLocation } = context;
+  const { gl, program } = context;
 
   gl.useProgram(program);
   // Update viewport and resolution
   gl.viewport(0, 0, width, height);
+  const resolutionLocation = gl.getUniformLocation(program, "u_resolution");
   gl.uniform2fv(resolutionLocation, [width, height]);
+
+  const positionLocation = gl.getUniformLocation(program, "u_position");
+  gl.uniform3fv(positionLocation, [position.x, position.y, position.z]);
 
   // Clear and draw
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -167,9 +171,29 @@ const render = ({
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 };
 
+// Pure function to calculate new position based on mouse delta
+const calculateNewPosition = (
+  currentPosition: { x: number; y: number; z: number },
+  mouseDelta: { x: number; y: number },
+  canvasSize: { width: number; height: number }
+): { x: number; y: number; z: number } => {
+  // Scale factor based on zoom level (z value) with dampening
+  const scaleFactor = currentPosition.z / canvasSize.width;
+
+  return {
+    x: currentPosition.x - mouseDelta.x * scaleFactor,
+    y: currentPosition.y + mouseDelta.y * scaleFactor, // Invert y for natural movement
+    z: currentPosition.z,
+  };
+};
+
 export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<ReturnType<typeof initWebGL>>(null);
+
+  const [position, setPosition] = useState({ x: -0.5, y: 0, z: 2 });
+  const [isDragging, setIsDragging] = useState(false);
+  const lastMousePos = useRef<{ x: number; y: number } | null>(null);
 
   // Initialize WebGL only once
   useEffect(() => {
@@ -178,6 +202,7 @@ export const Canvas = () => {
     contextRef.current = initWebGL(canvas);
   }, []);
 
+  // Handle resize and render
   useEffect(() => {
     const canvas = canvasRef.current;
     const context = contextRef.current;
@@ -185,25 +210,69 @@ export const Canvas = () => {
 
     const resizeObserver = new ResizeObserver(entries => {
       const entry = entries[0];
-      console.log(entry);
       if (entry) {
         const width = entry.contentRect.width;
         const height = entry.contentRect.height;
         canvas.width = width;
         canvas.height = height;
-        render({ context, width, height });
+        render({ context, position, width, height });
       }
     });
 
     resizeObserver.observe(canvas);
     return () => resizeObserver.disconnect();
-  }, []);
+  }, [position]);
 
+  // Handle mouse interactions
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    initWebGL(canvas);
-  }, []);
+
+    const handleMouseDown = (e: MouseEvent) => {
+      setIsDragging(true);
+      lastMousePos.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !lastMousePos.current) return;
+
+      const mouseDelta = {
+        x: e.clientX - lastMousePos.current.x,
+        y: e.clientY - lastMousePos.current.y,
+      };
+
+      setPosition(currentPosition =>
+        calculateNewPosition(currentPosition, mouseDelta, {
+          width: canvas.width,
+          height: canvas.height,
+        })
+      );
+
+      lastMousePos.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      lastMousePos.current = null;
+    };
+
+    const handleMouseLeave = () => {
+      setIsDragging(false);
+      lastMousePos.current = null;
+    };
+
+    canvas.addEventListener("mousedown", handleMouseDown);
+    canvas.addEventListener("mousemove", handleMouseMove);
+    canvas.addEventListener("mouseup", handleMouseUp);
+    canvas.addEventListener("mouseleave", handleMouseLeave);
+
+    return () => {
+      canvas.removeEventListener("mousedown", handleMouseDown);
+      canvas.removeEventListener("mousemove", handleMouseMove);
+      canvas.removeEventListener("mouseup", handleMouseUp);
+      canvas.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, [isDragging]);
 
   return (
     <canvas id="canvas" className="h-screen w-screen" ref={canvasRef}></canvas>
