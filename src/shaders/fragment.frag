@@ -32,7 +32,7 @@ void main() {
       float scaledI = float(i) / 100.0;
       color = hsv2rgb(vec3(
         scaledI, 
-        100, 
+        1.0, 
         float(((mod(scaledI, 200.0)) >= 100.0 ? 100.0 - mod(scaledI, 100.0) : mod(scaledI, 100.0)))
         )
       );
