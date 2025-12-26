@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 // Pure function to calculate new position based on mouse delta
 const calculateNewPosition = (
@@ -6,16 +6,12 @@ const calculateNewPosition = (
   mouseDelta: { x: number; y: number },
   canvasSize: { width: number; height: number }
 ): { x: number; y: number; z: number } => {
-  const scaleFactor = currentPosition.z / canvasSize.width;
-
-  console.log({
-    mouseDelta,
-    scaleFactor,
-  });
+  const scaleFactor = (currentPosition.z / canvasSize.width) * 2;
+  const ratio = canvasSize.width / canvasSize.height;
 
   return {
     x: currentPosition.x - mouseDelta.x * scaleFactor,
-    y: currentPosition.y + mouseDelta.y * scaleFactor, // Invert y for natural movement
+    y: currentPosition.y + mouseDelta.y * scaleFactor * ratio, // Invert y for natural movement
     z: currentPosition.z,
   };
 };

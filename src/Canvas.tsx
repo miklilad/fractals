@@ -154,7 +154,7 @@ export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<ReturnType<typeof initWebGL>>(null);
 
-  const [position, setPosition] = useState({ x: -0.5, y: 0, z: 2 });
+  const [position, setPosition] = useState({ x: -0.5, y: 0, z: 0.5 });
 
   // Initialize WebGL only once
   useEffect(() => {
