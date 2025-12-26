@@ -29,7 +29,7 @@ void main() {
   vec2 z = vec2(0.0, 0.0);
   for (int i = 0; i < 1000; i++) {
     if (length(z) > 2.0) {
-      color = float(i) / 100.0;
+      color = float(i) / 1000.0;
       break;
     }
     float xtemp = z.x * z.x - z.y * z.y + coord.x;

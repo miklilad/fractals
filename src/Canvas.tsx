@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import vertexShaderSource from "./shaders/vertex.vert?raw";
 import fragmentShaderSource from "./shaders/fragment.frag?raw";
 import { useMouseDragMovement } from "./hooks/useMouseMovement";
+import { useFPS } from "./hooks/useFPS";
 
 // Pure function to create and compile a shader
 const createShader = (
@@ -142,6 +143,7 @@ export const Canvas = () => {
   const contextRef = useRef<ReturnType<typeof initWebGL>>(null);
 
   const [position, setPosition] = useState({ x: -0.5, y: 0, z: 2 });
+  const fps = useFPS();
 
   // Initialize WebGL only once
   useEffect(() => {
@@ -180,7 +182,7 @@ export const Canvas = () => {
     <div className="relative h-screen w-screen">
       <canvas id="canvas" className="h-full w-full" ref={canvasRef} />
       <div className="bg-black-100/10 absolute top-0 left-0 p-4 text-white">
-        <p>Screen position:</p>
+        <p>FPS: {fps}</p>
         <p>x: {position.x.toFixed(majorDigits)}</p>
         <p>y: {position.y.toFixed(majorDigits)}</p>
         <p>z: {position.z.toFixed(majorDigits)}</p>
