@@ -2,9 +2,9 @@ precision highp float;
 uniform vec2 u_resolution;
 uniform vec3 u_position;
 
-// float map(float value, float min1, float max1, float min2, float max2) {
-//   return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
-// }
+float map(float value, float min1, float max1, float min2, float max2) {
+  return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+}
 
 vec2 map(vec2 value, vec2 min1, vec2 max1, vec2 min2, vec2 max2) {
   return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
@@ -19,12 +19,13 @@ vec3 hsv2rgb(vec3 c)
 
 void main() {
   float ratio = u_resolution.x / u_resolution.y;
-  vec2 coord = map(gl_FragCoord.xy, 
-                  vec2(0.0, 0.0), 
-                  u_resolution, 
-                  u_position.xy - u_position.z, 
-                  u_position.xy + u_position.z);
-  coord.y /= ratio;
+  vec2 coord = map(
+    gl_FragCoord.xy, 
+    vec2(0.0), 
+    u_resolution, 
+    u_position.xy - vec2(u_position.z, u_position.z / ratio),
+    u_position.xy + vec2(u_position.z, u_position.z / ratio)
+  );
   vec3 color = vec3(0.0);
   vec2 z = vec2(0.0, 0.0);
   for (int i = 0; i < 1000; i++) {

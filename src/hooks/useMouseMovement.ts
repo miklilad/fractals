@@ -48,7 +48,7 @@ const screenToWorld = (
 
   return {
     x: position.x - position.z + normalizedX * position.z * 2,
-    y: (position.y - position.z + normalizedY * position.z * 2) / ratio,
+    y: position.y - position.z / ratio + normalizedY * (position.z / ratio) * 2,
   };
 };
 
@@ -75,7 +75,7 @@ const calculateZoomAtPoint = (
   const normalizedY = 1 - cursorScreen.y / canvasSize.height; // Invert y axis
 
   const newX = worldPosBefore.x - normalizedX * newZ * 2 + newZ;
-  const newY = worldPosBefore.y * ratio + newZ - normalizedY * newZ * 2;
+  const newY = worldPosBefore.y + newZ / ratio - normalizedY * (newZ / ratio) * 2;
 
   return {
     x: newX,

@@ -142,7 +142,12 @@ export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<ReturnType<typeof initWebGL>>(null);
 
-  const [position, setPosition] = useState({ x: -0.5, y: 0, z: 2 });
+  // const [position, setPosition] = useState({ x: -0.5, y: 0, z: 2 });
+  const [position, setPosition] = useState({
+    x: -1.253488,
+    y: -0.3846224,
+    z: 0.000042,
+  });
   const fps = useFPS();
 
   // Initialize WebGL only once
