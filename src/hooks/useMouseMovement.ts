@@ -222,7 +222,7 @@ export const useMouseDragMovement = ({
 
         const distanceRatio = currentDistance / lastTouchDistance.current;
         // Pinch in (distanceRatio < 1) zooms in, pinch out (distanceRatio > 1) zooms out
-        const zoomDelta = (1 - distanceRatio) * 4; // Amplify the zoom effect
+        const zoomDelta = (1 - distanceRatio) * 10; // Amplify the zoom effect
 
         setPosition(currentPosition =>
           calculateZoomAtPoint(currentPosition, centerScreen, zoomDelta, {
