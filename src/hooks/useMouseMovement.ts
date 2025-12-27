@@ -7,11 +7,10 @@ const calculateNewPosition = (
   canvasSize: { width: number; height: number }
 ): { x: number; y: number; z: number } => {
   const scaleFactor = (currentPosition.z / canvasSize.width) * 2;
-  const ratio = canvasSize.width / canvasSize.height;
 
   return {
     x: currentPosition.x - mouseDelta.x * scaleFactor,
-    y: currentPosition.y + mouseDelta.y * scaleFactor * ratio, // Invert y for natural movement
+    y: currentPosition.y + mouseDelta.y * scaleFactor, // Invert y for natural movement
     z: currentPosition.z,
   };
 };
@@ -75,7 +74,8 @@ const calculateZoomAtPoint = (
   const normalizedY = 1 - cursorScreen.y / canvasSize.height; // Invert y axis
 
   const newX = worldPosBefore.x - normalizedX * newZ * 2 + newZ;
-  const newY = worldPosBefore.y + newZ / ratio - normalizedY * (newZ / ratio) * 2;
+  const newY =
+    worldPosBefore.y + newZ / ratio - normalizedY * (newZ / ratio) * 2;
 
   return {
     x: newX,
