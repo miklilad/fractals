@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import vertexShaderSource from "./shaders/vertex.vert?raw";
 import fragmentShaderSource from "./shaders/fragment.frag?raw";
+import fragmentShader2Source from "./shaders/fragment2.frag?raw";
 import { useMouseDragMovement } from "./hooks/useMouseMovement";
 import { useFPS } from "./hooks/useFPS";
 
@@ -50,7 +51,7 @@ const createProgram = (
 };
 
 // Initialize WebGL with shaders and buffers
-const initWebGL = (canvas: HTMLCanvasElement) => {
+const initWebGL = (canvas: HTMLCanvasElement, useFragmentShader2: boolean) => {
   const gl = canvas.getContext("webgl");
   if (!gl) {
     console.error("WebGL not supported");
@@ -62,7 +63,7 @@ const initWebGL = (canvas: HTMLCanvasElement) => {
   const fragmentShader = createShader(
     gl,
     gl.FRAGMENT_SHADER,
-    fragmentShaderSource
+    useFragmentShader2 ? fragmentShader2Source : fragmentShaderSource
   );
 
   if (!vertexShader || !fragmentShader) return;
@@ -141,7 +142,7 @@ const render = ({
 export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<ReturnType<typeof initWebGL>>(null);
-
+  const [useFragmentShader2, setUseFragmentShader2] = useState(false);
   // const [position, setPosition] = useState({ x: -0.5, y: 0, z: 2 });
   const [position, setPosition] = useState({
     x: -1.253488,
@@ -154,8 +155,15 @@ export const Canvas = () => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    contextRef.current = initWebGL(canvas);
-  }, []);
+    contextRef.current = initWebGL(canvas, useFragmentShader2);
+    if (!contextRef.current) return;
+    render({
+      context: contextRef.current,
+      position,
+      width: canvas.width,
+      height: canvas.height,
+    });
+  }, [useFragmentShader2]);
 
   useMouseDragMovement({ setPosition, canvasRef });
 
@@ -191,6 +199,11 @@ export const Canvas = () => {
         <p>x: {position.x.toFixed(majorDigits)}</p>
         <p>y: {position.y.toFixed(majorDigits)}</p>
         <p>z: {position.z.toFixed(majorDigits)}</p>
+        <button onClick={() => setUseFragmentShader2(!useFragmentShader2)}>
+          {useFragmentShader2
+            ? "Using Fragment Shader 2"
+            : "Using Fragment Shader 1"}
+        </button>
       </div>
     </div>
   );
