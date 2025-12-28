@@ -189,7 +189,8 @@ export const Canvas = () => {
   }, [position]);
 
   const majorDigits =
-    (/^0*/.exec(String(position.z).replace(".", ""))?.[0] || "").length + 2;
+    (/^0*/.exec(String(position.z.toFixed(100)).replace(".", ""))?.[0] || "")
+      .length + 2;
 
   return (
     <div className="relative h-screen w-screen">
