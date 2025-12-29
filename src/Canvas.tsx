@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import vertexShaderSource from "./shaders/vertex.vert?raw";
 import fragmentShaderSource from "./shaders/fragment.frag?raw";
 import fragmentShader2Source from "./shaders/fragment2.frag?raw";
-import fragmentShader3Source from "./shaders/fragment3.frag?raw";
 import { useMouseDragMovement } from "./hooks/useMouseMovement";
 import { useFPS } from "./hooks/useFPS";
 import { Tooltip } from "react-tooltip";
@@ -55,23 +54,32 @@ const createProgram = (
 const FRAGMENT_SHADER_SOURCES = [
   fragmentShaderSource,
   fragmentShader2Source,
-  fragmentShader3Source,
-];
+] as const;
 
 // Initialize WebGL with shaders and buffers
-const initWebGL = (canvas: HTMLCanvasElement, fragmentShaderIndex: number) => {
+const initWebGL = (
+  canvas: HTMLCanvasElement,
+  fragmentShaderIndex: number,
+  calculateColorValue: 0 | 1
+) => {
   const gl = canvas.getContext("webgl");
   if (!gl) {
     console.error("WebGL not supported");
     return;
   }
 
+  const fragmentShaderSource = FRAGMENT_SHADER_SOURCES[fragmentShaderIndex];
+  const fragmentShaderSourcePreprocessed = fragmentShaderSource.replace(
+    "{{{calculateColorValue}}}",
+    calculateColorValue.toString()
+  );
+
   // Create shaders
   const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
   const fragmentShader = createShader(
     gl,
     gl.FRAGMENT_SHADER,
-    FRAGMENT_SHADER_SOURCES[fragmentShaderIndex]
+    fragmentShaderSourcePreprocessed
   );
 
   if (!vertexShader || !fragmentShader) return;
@@ -167,8 +175,8 @@ const render = ({
 export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<ReturnType<typeof initWebGL>>(null);
-  const [fragmentShaderIndex, setFragmentShaderIndex] = useState(2);
-  // const [position, setPosition] = useState({ x: -0.5, y: 0, z: 2 });
+  const [fragmentShaderIndex, setFragmentShaderIndex] = useState(1);
+  const [calculateColorValue, setCalculateColorValue] = useState<0 | 1>(0);
   const [position, setPosition] = useState({
     x: -1.253488,
     y: -0.3846224,
@@ -180,7 +188,11 @@ export const Canvas = () => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    contextRef.current = initWebGL(canvas, fragmentShaderIndex);
+    contextRef.current = initWebGL(
+      canvas,
+      fragmentShaderIndex,
+      calculateColorValue
+    );
     if (!contextRef.current) return;
     render({
       context: contextRef.current,
@@ -188,7 +200,7 @@ export const Canvas = () => {
       width: canvas.width,
       height: canvas.height,
     });
-  }, [fragmentShaderIndex]);
+  }, [fragmentShaderIndex, calculateColorValue]);
 
   useMouseDragMovement({ setPosition, canvasRef });
 
@@ -231,15 +243,30 @@ export const Canvas = () => {
           z: {position.z.toFixed(majorDigits)}
         </p>
         <Tooltip id="z-tooltip" />
-        <button
-          onClick={() =>
-            setFragmentShaderIndex(
-              (fragmentShaderIndex + 1) % FRAGMENT_SHADER_SOURCES.length
-            )
-          }
-        >
-          {`Using Fragment Shader ${fragmentShaderIndex + 1}`}
-        </button>
+        <p>
+          <button
+            onClick={() =>
+              setFragmentShaderIndex(
+                (fragmentShaderIndex + 1) % FRAGMENT_SHADER_SOURCES.length
+              )
+            }
+          >
+            {`Using Fragment Shader ${fragmentShaderIndex + 1}`}
+          </button>
+        </p>
+        {fragmentShaderIndex === 1 && (
+          <p>
+            <button
+              onClick={() =>
+                setCalculateColorValue(calculateColorValue === 0 ? 1 : 0)
+              }
+            >
+              {calculateColorValue === 0
+                ? "Legacy color value"
+                : "Color value with drop off"}
+            </button>
+          </p>
+        )}
       </div>
     </div>
   );
