@@ -11,23 +11,27 @@ vec3 hsv2rgb(vec3 c)
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
+vec3 calculateColor(int i) {
+  float scaledI = float(i) / 100.0;
+  return hsv2rgb(vec3(
+    scaledI, 
+    1.0, 
+    float(((mod(scaledI, 200.0)) >= 100.0 ? 100.0 - mod(scaledI, 100.0) : mod(scaledI, 100.0)))
+    )
+  );
+}
+
 void main() {
   vec2 coord = u_min2 + gl_FragCoord.xy * u_scalingFactor;
-
   vec3 color = vec3(0.0);
   vec2 z = vec2(0.0, 0.0);
   for (int i = 0; i < 1000; i++) {
-    if (length(z) > 2.0) {
-      float scaledI = float(i) / 100.0;
-      color = hsv2rgb(vec3(
-        scaledI, 
-        1.0, 
-        float(((mod(scaledI, 200.0)) >= 100.0 ? 100.0 - mod(scaledI, 100.0) : mod(scaledI, 100.0)))
-        )
-      );
+    vec2 zSquared = z * z;
+    if (zSquared.x + zSquared.y > 4.0) {
+      color = calculateColor(i);
       break;
     }
-    float xtemp = z.x * z.x - z.y * z.y + coord.x;
+    float xtemp = zSquared.x - zSquared.y + coord.x;
     z.y = 2.0 * z.x * z.y + coord.y;
     z.x = xtemp;
   }
