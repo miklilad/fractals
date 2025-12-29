@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import vertexShaderSource from "./shaders/vertex.vert?raw";
 import fragmentShaderSource from "./shaders/fragment.frag?raw";
 import fragmentShader2Source from "./shaders/fragment2.frag?raw";
-import fragmentShader3Source from "./shaders/fragment3.frag?raw";
 import { useMouseDragMovement } from "./hooks/useMouseMovement";
 import { useFPS } from "./hooks/useFPS";
 import { Tooltip } from "react-tooltip";
@@ -52,11 +51,7 @@ const createProgram = (
   return null;
 };
 
-const FRAGMENT_SHADER_SOURCES = [
-  fragmentShaderSource,
-  fragmentShader2Source,
-  fragmentShader3Source,
-];
+const FRAGMENT_SHADER_SOURCES = [fragmentShaderSource, fragmentShader2Source];
 
 // Initialize WebGL with shaders and buffers
 const initWebGL = (canvas: HTMLCanvasElement, fragmentShaderIndex: number) => {
@@ -141,23 +136,6 @@ const render = ({
   const positionLocation = gl.getUniformLocation(program, "u_position");
   gl.uniform3fv(positionLocation, [position.x, position.y, position.z]);
 
-  const ratio = width / height;
-  const min2x = position.x - position.z;
-  const min2y = position.y - position.z / ratio;
-  const max2x = position.x + position.z;
-  const max2y = position.y + position.z / ratio;
-  const scalingFactorX = (max2x - min2x) / width;
-  const scalingFactorY = (max2y - min2y) / height;
-
-  const scalingFactorLocation = gl.getUniformLocation(
-    program,
-    "u_scalingFactor"
-  );
-  gl.uniform2fv(scalingFactorLocation, [scalingFactorX, scalingFactorY]);
-
-  const min2Location = gl.getUniformLocation(program, "u_min2");
-  gl.uniform2fv(min2Location, [min2x, min2y]);
-
   // Clear and draw
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
@@ -167,7 +145,7 @@ const render = ({
 export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<ReturnType<typeof initWebGL>>(null);
-  const [fragmentShaderIndex, setFragmentShaderIndex] = useState(2);
+  const [fragmentShaderIndex, setFragmentShaderIndex] = useState(0);
   // const [position, setPosition] = useState({ x: -0.5, y: 0, z: 2 });
   const [position, setPosition] = useState({
     x: -1.253488,
