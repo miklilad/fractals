@@ -32,7 +32,8 @@ void main() {
       break;
     }
     float xtemp = zSquared.x - zSquared.y + coord.x;
-    z.y = 2.0 * z.x * z.y + coord.y;
+    z.y *= z.x;
+    z.y += z.y + coord.y;
     z.x = xtemp;
   }
   gl_FragColor = vec4(color, 1.0);
