@@ -300,7 +300,7 @@ export const Canvas = () => {
       <div className="absolute top-0 right-0 flex flex-col items-end bg-black/50 p-4 text-white">
         <p>
           <button
-            className="my-1 rounded-md bg-white p-1 text-black"
+            className="my-1 rounded-md bg-gray-800 p-1 text-white"
             onClick={() =>
               setPositionIndex((positionIndex + 1) % POSITIONS.length)
             }
@@ -310,7 +310,7 @@ export const Canvas = () => {
         </p>
         <p>
           <button
-            className="my-1 rounded-md bg-white p-1 text-black"
+            className="my-1 rounded-md bg-gray-800 p-1 text-white"
             onClick={() =>
               setFragmentShaderIndex(
                 (fragmentShaderIndex + 1) % FRAGMENT_SHADER_SOURCES.length
@@ -323,7 +323,7 @@ export const Canvas = () => {
         {hasCalculateColorValue && (
           <p>
             <button
-              className="my-1 rounded-md bg-white p-1 text-black"
+              className="my-1 rounded-md bg-gray-800 p-1 text-white"
               onClick={() =>
                 setCalculateColorValue(calculateColorValue === 0 ? 1 : 0)
               }
