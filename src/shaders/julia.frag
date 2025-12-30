@@ -3,6 +3,7 @@ uniform vec2 u_resolution;
 uniform vec3 u_position;
 uniform vec2 u_scalingFactor;
 uniform vec2 u_min2;
+uniform vec2 u_juliaConstant;
 
 vec3 hsv2rgb(vec3 c)
 {
@@ -23,7 +24,7 @@ vec3 calculateColor(int i) {
 
 
 void main() {
-  vec2 coord = vec2(0.30, -0.47);
+  vec2 coord = u_juliaConstant;
   vec3 color = vec3(0.0);
   vec2 z = u_min2 + gl_FragCoord.xy * u_scalingFactor;
   for (int i = 0; i < 1000; i++) {

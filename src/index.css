@@ -3,15 +3,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
-body {
-  background-color: #242424;
+@theme {
+  --color-primary: #3b82f6;
+  --color-muted: #27272a;
+  --color-ring: #3b82f6;
 }
 
-
-@layer base {
-  * {
-    
-  }
-  body {
-  }
+body {
+  background-color: #242424;
 }

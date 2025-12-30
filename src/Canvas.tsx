@@ -5,6 +5,7 @@ import { useFPS } from "./hooks/useFPS";
 import { Tooltip } from "react-tooltip";
 import type { Fractals } from "./types";
 import { CONFIG } from "./config";
+import { Slider } from "./components/ui/slider";
 
 // Pure function to create and compile a shader
 const createShader = (
@@ -123,6 +124,7 @@ const render = ({
   position,
   width,
   height,
+  juliaConstant,
 }: {
   context: {
     gl: WebGLRenderingContext;
@@ -131,6 +133,7 @@ const render = ({
   position: { x: number; y: number; z: number };
   width: number;
   height: number;
+  juliaConstant: { x: number; y: number };
 }) => {
   const { gl, program } = context;
 
@@ -160,6 +163,12 @@ const render = ({
   const min2Location = gl.getUniformLocation(program, "u_min2");
   gl.uniform2fv(min2Location, [min2x, min2y]);
 
+  const juliaConstantLocation = gl.getUniformLocation(
+    program,
+    "u_juliaConstant"
+  );
+  gl.uniform2fv(juliaConstantLocation, [juliaConstant.x, juliaConstant.y]);
+
   // Clear and draw
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
@@ -178,6 +187,10 @@ export const Canvas = () => {
   const [position, setPosition] = useState(
     CONFIG[fractal].positions[positionIndex]
   );
+  const [juliaConstant, setJuliaConstant] = useState<{ x: number; y: number }>({
+    x: 0.3,
+    y: -0.47,
+  });
   useEffect(() => {
     setPosition(CONFIG[fractal].positions[positionIndex]);
   }, [positionIndex, fractal]);
@@ -198,6 +211,7 @@ export const Canvas = () => {
       position,
       width: canvas.width,
       height: canvas.height,
+      juliaConstant,
     });
   }, [fragmentShaderIndex, calculateColorValue, positionIndex, fractal]);
 
@@ -216,13 +230,13 @@ export const Canvas = () => {
         const height = entry.contentRect.height;
         canvas.width = width;
         canvas.height = height;
-        render({ context, position, width, height });
+        render({ context, position, width, height, juliaConstant });
       }
     });
 
     resizeObserver.observe(canvas);
     return () => resizeObserver.disconnect();
-  }, [position]);
+  }, [position, juliaConstant]);
 
   const majorDigits =
     (/^0*/.exec(String(position.z.toFixed(100)).replace(".", ""))?.[0] || "")
@@ -311,6 +325,37 @@ export const Canvas = () => {
           </p>
         )}
       </div>
+      {fractal === "julia" && (
+        <>
+          <div className="absolute bottom-5 flex w-full justify-center">
+            <Slider
+              value={[juliaConstant.x]}
+              onValueChange={values =>
+                setJuliaConstant({ ...juliaConstant, x: values[0] })
+              }
+              min={-2}
+              max={2}
+              step={0.001}
+              className="w-1/2"
+            />
+            <p className="ml-2 text-white">x: {juliaConstant.x.toFixed(3)}</p>
+          </div>
+          <div className="absolute top-1/4 right-5 flex h-1/2 flex-col justify-center">
+            <Slider
+              orientation="vertical"
+              value={[juliaConstant.y]}
+              onValueChange={values =>
+                setJuliaConstant({ ...juliaConstant, y: values[0] })
+              }
+              min={-2}
+              max={2}
+              step={0.001}
+              className="w-1/4"
+            />
+            <p className="mt-2 text-white">y: {juliaConstant.y.toFixed(3)}</p>
+          </div>
+        </>
+      )}
     </div>
   );
 };
