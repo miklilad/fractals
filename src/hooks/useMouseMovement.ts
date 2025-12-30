@@ -84,7 +84,7 @@ const calculateZoomAtPoint = (
   };
 };
 
-interface UseMouveMovementProps {
+interface UseMouseMovementProps {
   setPosition: React.Dispatch<
     React.SetStateAction<{
       x: number;
@@ -95,10 +95,10 @@ interface UseMouveMovementProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
 }
 
-export const useMouseDragMovement = ({
+export const useMouseMovement = ({
   setPosition,
   canvasRef,
-}: UseMouveMovementProps) => {
+}: UseMouseMovementProps) => {
   const isDraggingRef = useRef(false);
   const lastMousePos = useRef<{ x: number; y: number } | null>(null);
   const lastTouchDistance = useRef<number | null>(null);

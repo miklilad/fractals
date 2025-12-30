@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import vertexShaderSource from "./shaders/vertex.vert?raw";
 import fragmentShaderSource from "./shaders/fragment.frag?raw";
 import fragmentShader2Source from "./shaders/fragment2.frag?raw";
-import { useMouseDragMovement } from "./hooks/useMouseMovement";
+import fragmentShader3Source from "./shaders/fragment3.frag?raw";
+import { useMouseMovement } from "./hooks/useMouseMovement";
 import { useFPS } from "./hooks/useFPS";
 import { Tooltip } from "react-tooltip";
 
@@ -54,6 +55,7 @@ const createProgram = (
 const FRAGMENT_SHADER_SOURCES = [
   fragmentShaderSource,
   fragmentShader2Source,
+  fragmentShader3Source,
 ] as const;
 
 // Initialize WebGL with shaders and buffers
@@ -172,17 +174,58 @@ const render = ({
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 };
 
-export const Canvas = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const contextRef = useRef<ReturnType<typeof initWebGL>>(null);
-  const [fragmentShaderIndex, setFragmentShaderIndex] = useState(1);
-  const [calculateColorValue, setCalculateColorValue] = useState<0 | 1>(0);
-  const [position, setPosition] = useState({
+const POSITIONS = [
+  {
+    x: -0.5,
+    y: 0,
+    z: 2,
+  },
+  {
     x: -1.253488,
     y: -0.3846224,
     z: 0.000042,
-  });
+  },
+  {
+    x: -1.25344342,
+    y: -0.38461364,
+    z: 0.00000356,
+  },
+  {
+    x: -0.114961,
+    y: -0.043555,
+    z: 0.000567,
+  },
+];
+
+export const Canvas = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const contextRef = useRef<ReturnType<typeof initWebGL>>(null);
+  const [fragmentShaderIndex, setFragmentShaderIndex] = useState(2);
+  const [calculateColorValue, setCalculateColorValue] = useState<0 | 1>(0);
+  const [positionIndex, setPositionIndex] = useState(2);
+  const [position, setPosition] = useState(POSITIONS[positionIndex]);
+  useEffect(() => {
+    setPosition(POSITIONS[positionIndex]);
+  }, [positionIndex]);
   const fps = useFPS();
+
+  // const strNum1 =
+  //   "11111111.000002440000000000000000000000000000000000000222222";
+  // const strNum2 =
+  //   "11111112.0000035600000000000000000000000000000000000002222222";
+
+  // const decimal1 = new Decimal(strNum1);
+  // const decimal2 = new Decimal(strNum2);
+  // const number1 = Number(strNum1);
+  // const number2 = Number(strNum2);
+  // console.log({
+  //   decimal1: decimal1.toString(),
+  //   decimal2: decimal2.toString(),
+  //   sum: decimal1.plus(decimal2),
+  //   number1: number1,
+  //   number2: number2,
+  //   sum2: number1 + number2,
+  // });
 
   // Initialize WebGL only once
   useEffect(() => {
@@ -200,9 +243,9 @@ export const Canvas = () => {
       width: canvas.width,
       height: canvas.height,
     });
-  }, [fragmentShaderIndex, calculateColorValue]);
+  }, [fragmentShaderIndex, calculateColorValue, positionIndex]);
 
-  useMouseDragMovement({ setPosition, canvasRef });
+  useMouseMovement({ setPosition, canvasRef });
 
   // Handle resize and render
   useEffect(() => {
@@ -229,6 +272,14 @@ export const Canvas = () => {
     (/^0*/.exec(String(position.z.toFixed(100)).replace(".", ""))?.[0] || "")
       .length + 2;
 
+  const hasCalculateColorValue = useMemo(
+    () =>
+      FRAGMENT_SHADER_SOURCES[fragmentShaderIndex].includes(
+        "{{{calculateColorValue}}}"
+      ),
+    [fragmentShaderIndex]
+  );
+
   return (
     <div className="relative h-screen w-screen">
       <canvas id="canvas" className="h-full w-full" ref={canvasRef} />
@@ -243,20 +294,34 @@ export const Canvas = () => {
           z: {position.z.toFixed(majorDigits)}
         </p>
         <Tooltip id="z-tooltip" />
+      </div>
+      <div className="absolute top-0 right-0 flex flex-col items-end bg-black/50 p-4 text-white">
         <p>
           <button
+            className="my-1 rounded-md bg-white p-1 text-black"
+            onClick={() =>
+              setPositionIndex((positionIndex + 1) % POSITIONS.length)
+            }
+          >
+            {`Position ${positionIndex + 1}`}
+          </button>
+        </p>
+        <p>
+          <button
+            className="my-1 rounded-md bg-white p-1 text-black"
             onClick={() =>
               setFragmentShaderIndex(
                 (fragmentShaderIndex + 1) % FRAGMENT_SHADER_SOURCES.length
               )
             }
           >
-            {`Using Fragment Shader ${fragmentShaderIndex + 1}`}
+            {`Fragment Shader ${fragmentShaderIndex + 1}`}
           </button>
         </p>
-        {fragmentShaderIndex === 1 && (
+        {hasCalculateColorValue && (
           <p>
             <button
+              className="my-1 rounded-md bg-white p-1 text-black"
               onClick={() =>
                 setCalculateColorValue(calculateColorValue === 0 ? 1 : 0)
               }
