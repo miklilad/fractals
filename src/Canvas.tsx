@@ -373,7 +373,7 @@ export const Canvas = () => {
               className="my-1 rounded-md bg-gray-800 p-1 text-white"
               onClick={() => setShowAxis(!showAxis)}
             >
-              {showAxis ? "Show axis" : "Hide axis"}
+              {!showAxis ? "Show axis" : "Hide axis"}
             </button>
           </p>
         )}
