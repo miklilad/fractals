@@ -110,10 +110,11 @@ export const IterationPathOverlay = ({
   toggleFrozen,
 }: IterationPathOverlayProps) => {
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
+  const lastMousePosRef = useRef<{ x: number; y: number } | null>(null);
 
   // Handle mouse movement for iteration visualization
   useEffect(() => {
-    if (!isActive || isFrozen) return;
+    if (!isActive) return;
 
     const canvas = targetCanvasRef.current;
     if (!canvas) return;
@@ -123,15 +124,20 @@ export const IterationPathOverlay = ({
       const screenX = e.clientX - rect.left;
       const screenY = e.clientY - rect.top;
 
-      // Convert screen coordinates to complex plane coordinates
-      const complex = screenToComplex(
-        screenX,
-        screenY,
-        canvas.width,
-        canvas.height,
-        position
-      );
-      setComplexCoord(complex);
+      // Always track the mouse position
+      lastMousePosRef.current = { x: screenX, y: screenY };
+
+      // Only update complex coord if not frozen
+      if (!isFrozen) {
+        const complex = screenToComplex(
+          screenX,
+          screenY,
+          canvas.width,
+          canvas.height,
+          position
+        );
+        setComplexCoord(complex);
+      }
     };
 
     canvas.addEventListener("mousemove", handleMouseMove);
@@ -141,21 +147,60 @@ export const IterationPathOverlay = ({
     };
   }, [isActive, isFrozen, position, targetCanvasRef, setComplexCoord]);
 
-  // Handle click to freeze/unfreeze
+  // Update complex coord immediately when unfreezing
+  useEffect(() => {
+    if (!isActive || isFrozen) return;
+
+    const canvas = targetCanvasRef.current;
+    if (!canvas || !lastMousePosRef.current) return;
+
+    const { x: screenX, y: screenY } = lastMousePosRef.current;
+    const complex = screenToComplex(
+      screenX,
+      screenY,
+      canvas.width,
+      canvas.height,
+      position
+    );
+    setComplexCoord(complex);
+  }, [isActive, isFrozen, position, targetCanvasRef, setComplexCoord]);
+
+  // Handle click to freeze/unfreeze (only short clicks, not drags)
   useEffect(() => {
     if (!isActive) return;
 
     const canvas = targetCanvasRef.current;
     if (!canvas) return;
 
-    const handleClick = () => {
-      toggleFrozen();
+    let mouseDownTime = 0;
+    let mouseDownPos = { x: 0, y: 0 };
+    const MAX_CLICK_DURATION = 200; // milliseconds
+    const MAX_MOVE_DISTANCE = 5; // pixels
+
+    const handleMouseDown = (e: MouseEvent) => {
+      mouseDownTime = Date.now();
+      mouseDownPos = { x: e.clientX, y: e.clientY };
     };
 
-    canvas.addEventListener("click", handleClick);
+    const handleMouseUp = (e: MouseEvent) => {
+      const duration = Date.now() - mouseDownTime;
+      const distance = Math.sqrt(
+        Math.pow(e.clientX - mouseDownPos.x, 2) +
+          Math.pow(e.clientY - mouseDownPos.y, 2)
+      );
+
+      // Only toggle if it was a short click and didn't move much
+      if (duration < MAX_CLICK_DURATION && distance < MAX_MOVE_DISTANCE) {
+        toggleFrozen();
+      }
+    };
+
+    canvas.addEventListener("mousedown", handleMouseDown);
+    canvas.addEventListener("mouseup", handleMouseUp);
 
     return () => {
-      canvas.removeEventListener("click", handleClick);
+      canvas.removeEventListener("mousedown", handleMouseDown);
+      canvas.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isActive, targetCanvasRef, toggleFrozen]);
 
