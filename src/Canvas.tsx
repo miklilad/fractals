@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import vertexShaderSource from "./shaders/vertex.vert?raw";
-import mandelbrotShaderSource from "./shaders/mandelbrot.frag?raw";
-import mandelbrot2ShaderSource from "./shaders/mandelbrot2.frag?raw";
-import mandelbrot3ShaderSource from "./shaders/mandelbrot3.frag?raw";
-import juliaShaderSource from "./shaders/julia.frag?raw";
 import { useMouseMovement } from "./hooks/useMouseMovement";
 import { useFPS } from "./hooks/useFPS";
 import { Tooltip } from "react-tooltip";
+import type { Fractals } from "./types";
+import { CONFIG } from "./config";
 
 // Pure function to create and compile a shader
 const createShader = (
@@ -53,17 +51,10 @@ const createProgram = (
   return null;
 };
 
-const FRAGMENT_SHADER_SOURCES = [
-  mandelbrotShaderSource,
-  mandelbrot2ShaderSource,
-  mandelbrot3ShaderSource,
-  juliaShaderSource,
-] as const;
-
 // Initialize WebGL with shaders and buffers
 const initWebGL = (
   canvas: HTMLCanvasElement,
-  fragmentShaderIndex: number,
+  fragmentShaderSource: string,
   calculateColorValue: 0 | 1
 ) => {
   const gl = canvas.getContext("webgl");
@@ -72,7 +63,6 @@ const initWebGL = (
     return;
   }
 
-  const fragmentShaderSource = FRAGMENT_SHADER_SOURCES[fragmentShaderIndex];
   const fragmentShaderSourcePreprocessed = fragmentShaderSource.replace(
     "{{{calculateColorValue}}}",
     calculateColorValue.toString()
@@ -176,39 +166,24 @@ const render = ({
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 };
 
-const POSITIONS = [
-  {
-    x: -0.5,
-    y: 0,
-    z: 2,
-  },
-  {
-    x: -1.253488,
-    y: -0.3846224,
-    z: 0.000042,
-  },
-  {
-    x: -1.25344342,
-    y: -0.38461364,
-    z: 0.00000356,
-  },
-  {
-    x: -0.114961,
-    y: -0.043555,
-    z: 0.000567,
-  },
-];
-
 export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<ReturnType<typeof initWebGL>>(null);
-  const [fragmentShaderIndex, setFragmentShaderIndex] = useState(3);
+  const [fractal, setFractal] = useState<Fractals>("mandelbrot");
+  const [fragmentShaderIndex, setFragmentShaderIndex] = useState(0);
+  useEffect(() => {
+    setFragmentShaderIndex(
+      value => value % CONFIG[fractal].fragmentShaders.length
+    );
+  }, [fractal]);
   const [calculateColorValue, setCalculateColorValue] = useState<0 | 1>(0);
   const [positionIndex, setPositionIndex] = useState(0);
-  const [position, setPosition] = useState(POSITIONS[positionIndex]);
+  const [position, setPosition] = useState(
+    CONFIG[fractal].positions[positionIndex]
+  );
   useEffect(() => {
-    setPosition(POSITIONS[positionIndex]);
-  }, [positionIndex]);
+    setPosition(CONFIG[fractal].positions[positionIndex]);
+  }, [positionIndex, fractal]);
   const fps = useFPS();
 
   // const strNum1 =
@@ -235,7 +210,7 @@ export const Canvas = () => {
     if (!canvas) return;
     contextRef.current = initWebGL(
       canvas,
-      fragmentShaderIndex,
+      CONFIG[fractal].fragmentShaders[fragmentShaderIndex],
       calculateColorValue
     );
     if (!contextRef.current) return;
@@ -245,7 +220,7 @@ export const Canvas = () => {
       width: canvas.width,
       height: canvas.height,
     });
-  }, [fragmentShaderIndex, calculateColorValue, positionIndex]);
+  }, [fragmentShaderIndex, calculateColorValue, positionIndex, fractal]);
 
   useMouseMovement({ setPosition, canvasRef });
 
@@ -276,10 +251,10 @@ export const Canvas = () => {
 
   const hasCalculateColorValue = useMemo(
     () =>
-      FRAGMENT_SHADER_SOURCES[fragmentShaderIndex].includes(
+      CONFIG[fractal].fragmentShaders[fragmentShaderIndex].includes(
         "{{{calculateColorValue}}}"
       ),
-    [fragmentShaderIndex]
+    [fragmentShaderIndex, fractal]
   );
 
   return (
@@ -302,24 +277,41 @@ export const Canvas = () => {
           <button
             className="my-1 rounded-md bg-gray-800 p-1 text-white"
             onClick={() =>
-              setPositionIndex((positionIndex + 1) % POSITIONS.length)
+              setFractal(fractal === "mandelbrot" ? "julia" : "mandelbrot")
             }
           >
-            {`Position ${positionIndex + 1}`}
+            {`${fractal === "mandelbrot" ? "Mandelbrot" : "Julia"}`}
           </button>
         </p>
-        <p>
-          <button
-            className="my-1 rounded-md bg-gray-800 p-1 text-white"
-            onClick={() =>
-              setFragmentShaderIndex(
-                (fragmentShaderIndex + 1) % FRAGMENT_SHADER_SOURCES.length
-              )
-            }
-          >
-            {`Fragment Shader ${fragmentShaderIndex + 1}`}
-          </button>
-        </p>
+        {CONFIG[fractal].positions.length > 1 && (
+          <p>
+            <button
+              className="my-1 rounded-md bg-gray-800 p-1 text-white"
+              onClick={() =>
+                setPositionIndex(
+                  (positionIndex + 1) % CONFIG[fractal].positions.length
+                )
+              }
+            >
+              {`Position ${positionIndex + 1}`}
+            </button>
+          </p>
+        )}
+        {CONFIG[fractal].fragmentShaders.length > 1 && (
+          <p>
+            <button
+              className="my-1 rounded-md bg-gray-800 p-1 text-white"
+              onClick={() =>
+                setFragmentShaderIndex(
+                  (fragmentShaderIndex + 1) %
+                    CONFIG[fractal].fragmentShaders.length
+                )
+              }
+            >
+              {`Fragment Shader ${fragmentShaderIndex + 1}`}
+            </button>
+          </p>
+        )}
         {hasCalculateColorValue && (
           <p>
             <button
