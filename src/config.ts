@@ -14,6 +14,7 @@ export const CONFIG: Config = {
       },
     ],
     fragmentShaders: [juliaShaderSource],
+    defaultFragmentShaderIndex: 0,
   },
   mandelbrot: {
     positions: [
@@ -43,5 +44,6 @@ export const CONFIG: Config = {
       mandelbrot2ShaderSource,
       mandelbrot3ShaderSource,
     ],
+    defaultFragmentShaderIndex: 2,
   },
 };

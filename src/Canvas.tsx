@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import vertexShaderSource from "./shaders/vertex.vert?raw";
 import { useMouseMovement } from "./hooks/useMouseMovement";
 import { useFPS } from "./hooks/useFPS";
@@ -170,12 +170,9 @@ export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<ReturnType<typeof initWebGL>>(null);
   const [fractal, setFractal] = useState<Fractals>("mandelbrot");
-  const [fragmentShaderIndex, setFragmentShaderIndex] = useState(0);
-  useEffect(() => {
-    setFragmentShaderIndex(
-      value => value % CONFIG[fractal].fragmentShaders.length
-    );
-  }, [fractal]);
+  const [fragmentShaderIndex, setFragmentShaderIndex] = useState(
+    CONFIG[fractal].defaultFragmentShaderIndex
+  );
   const [calculateColorValue, setCalculateColorValue] = useState<0 | 1>(0);
   const [positionIndex, setPositionIndex] = useState(0);
   const [position, setPosition] = useState(
@@ -185,24 +182,6 @@ export const Canvas = () => {
     setPosition(CONFIG[fractal].positions[positionIndex]);
   }, [positionIndex, fractal]);
   const fps = useFPS();
-
-  // const strNum1 =
-  //   "11111111.000002440000000000000000000000000000000000000222222";
-  // const strNum2 =
-  //   "11111112.0000035600000000000000000000000000000000000002222222";
-
-  // const decimal1 = new Decimal(strNum1);
-  // const decimal2 = new Decimal(strNum2);
-  // const number1 = Number(strNum1);
-  // const number2 = Number(strNum2);
-  // console.log({
-  //   decimal1: decimal1.toString(),
-  //   decimal2: decimal2.toString(),
-  //   sum: decimal1.plus(decimal2),
-  //   number1: number1,
-  //   number2: number2,
-  //   sum2: number1 + number2,
-  // });
 
   // Initialize WebGL only once
   useEffect(() => {
@@ -257,6 +236,13 @@ export const Canvas = () => {
     [fragmentShaderIndex, fractal]
   );
 
+  const handleFractalChange = useCallback(() => {
+    const newFractal = fractal === "mandelbrot" ? "julia" : "mandelbrot";
+    setFractal(newFractal);
+    setFragmentShaderIndex(CONFIG[newFractal].defaultFragmentShaderIndex);
+    setPositionIndex(0);
+  }, [fractal, setFractal, setFragmentShaderIndex]);
+
   return (
     <div className="relative h-screen w-screen">
       <canvas id="canvas" className="h-full w-full" ref={canvasRef} />
@@ -276,9 +262,7 @@ export const Canvas = () => {
         <p>
           <button
             className="my-1 rounded-md bg-gray-800 p-1 text-white"
-            onClick={() =>
-              setFractal(fractal === "mandelbrot" ? "julia" : "mandelbrot")
-            }
+            onClick={handleFractalChange}
           >
             {`${fractal === "mandelbrot" ? "Mandelbrot" : "Julia"}`}
           </button>
