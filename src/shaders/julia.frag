@@ -23,7 +23,7 @@ vec3 calculateColor(int i) {
 
 
 void main() {
-  vec2 coord = vec2(u_position.x, u_position.y);
+  vec2 coord = vec2(0.30, -0.47);
   vec3 color = vec3(0.0);
   vec2 z = u_min2 + gl_FragCoord.xy * u_scalingFactor;
   for (int i = 0; i < 1000; i++) {
