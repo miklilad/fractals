@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import vertexShaderSource from "./shaders/vertex.vert?raw";
 import { useMouseMovement } from "./hooks/useMouseMovement";
 import { useFPS } from "./hooks/useFPS";
+import { useIterationPath } from "./hooks/useIterationPath";
 import { Tooltip } from "react-tooltip";
 import type { Fractals } from "./types";
 import { CONFIG } from "./config";
 import { Slider } from "./components/ui/slider";
+import { IterationPathOverlay } from "./components/IterationPathOverlay";
 
 // Pure function to create and compile a shader
 const createShader = (
@@ -189,10 +191,21 @@ export const Canvas = () => {
     x: 0.3,
     y: -0.47,
   });
+
   useEffect(() => {
     setPosition(CONFIG[fractal].positions[positionIndex]);
   }, [positionIndex, fractal]);
   const fps = useFPS();
+
+  // Iteration path visualization hook
+  const {
+    isEnabled: isIterationPathEnabled,
+    toggleEnabled: toggleIterationPath,
+    complexCoord,
+    setComplexCoord,
+    isFrozen,
+    toggleFrozen,
+  } = useIterationPath();
 
   // Initialize WebGL only once
   useEffect(() => {
@@ -273,7 +286,20 @@ export const Canvas = () => {
 
   return (
     <div className="relative h-screen w-screen">
-      <canvas id="canvas" className="h-full w-full" ref={canvasRef} />
+      <canvas
+        id="canvas"
+        className={`h-full w-full ${isIterationPathEnabled && fractal === "mandelbrot" ? "cursor-crosshair" : ""}`}
+        ref={canvasRef}
+      />
+      <IterationPathOverlay
+        isActive={isIterationPathEnabled && fractal === "mandelbrot"}
+        complexCoord={complexCoord}
+        setComplexCoord={setComplexCoord}
+        position={position}
+        targetCanvasRef={canvasRef}
+        isFrozen={isFrozen}
+        toggleFrozen={toggleFrozen}
+      />
       <div className="absolute top-0 left-0 bg-black/50 p-4 text-white">
         <p>FPS: {fps}</p>
         <p>x: {position.x.toFixed(majorDigits)}</p>
@@ -285,6 +311,11 @@ export const Canvas = () => {
           z: {position.z.toFixed(majorDigits)}
         </p>
         <Tooltip id="z-tooltip" />
+        {isIterationPathEnabled && fractal === "mandelbrot" && (
+          <p className="mt-2 font-bold text-green-400">
+            🎯 Iteration Path {isFrozen ? "(Frozen)" : "(Active)"}
+          </p>
+        )}
       </div>
       <div className="absolute top-0 right-0 flex flex-col items-end bg-black/50 p-4 text-white">
         <p>
@@ -343,6 +374,18 @@ export const Canvas = () => {
               onClick={() => setShowAxis(!showAxis)}
             >
               {showAxis ? "Show axis" : "Hide axis"}
+            </button>
+          </p>
+        )}
+        {fractal === "mandelbrot" && (
+          <p>
+            <button
+              className="my-1 rounded-md bg-gray-800 p-1 text-white"
+              onClick={toggleIterationPath}
+            >
+              {isIterationPathEnabled
+                ? "Hide Iteration Path"
+                : "Show Iteration Path"}
             </button>
           </p>
         )}
