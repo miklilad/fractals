@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import vertexShaderSource from "./shaders/vertex.vert?raw";
-import fragmentShaderSource from "./shaders/fragment.frag?raw";
-import fragmentShader2Source from "./shaders/fragment2.frag?raw";
-import fragmentShader3Source from "./shaders/fragment3.frag?raw";
+import mandelbrotShaderSource from "./shaders/mandelbrot.frag?raw";
+import mandelbrot2ShaderSource from "./shaders/mandelbrot2.frag?raw";
+import mandelbrot3ShaderSource from "./shaders/mandelbrot3.frag?raw";
+import juliaShaderSource from "./shaders/julia.frag?raw";
 import { useMouseMovement } from "./hooks/useMouseMovement";
 import { useFPS } from "./hooks/useFPS";
 import { Tooltip } from "react-tooltip";
@@ -53,9 +54,10 @@ const createProgram = (
 };
 
 const FRAGMENT_SHADER_SOURCES = [
-  fragmentShaderSource,
-  fragmentShader2Source,
-  fragmentShader3Source,
+  mandelbrotShaderSource,
+  mandelbrot2ShaderSource,
+  mandelbrot3ShaderSource,
+  juliaShaderSource,
 ] as const;
 
 // Initialize WebGL with shaders and buffers
@@ -200,9 +202,9 @@ const POSITIONS = [
 export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<ReturnType<typeof initWebGL>>(null);
-  const [fragmentShaderIndex, setFragmentShaderIndex] = useState(2);
+  const [fragmentShaderIndex, setFragmentShaderIndex] = useState(3);
   const [calculateColorValue, setCalculateColorValue] = useState<0 | 1>(0);
-  const [positionIndex, setPositionIndex] = useState(2);
+  const [positionIndex, setPositionIndex] = useState(0);
   const [position, setPosition] = useState(POSITIONS[positionIndex]);
   useEffect(() => {
     setPosition(POSITIONS[positionIndex]);
