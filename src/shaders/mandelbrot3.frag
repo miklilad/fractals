@@ -4,7 +4,7 @@ uniform vec3 u_position;
 uniform vec2 u_scalingFactor;
 uniform vec2 u_min2;
 
-#define CALCULATE_COLOR_VALUE {{{calculateColorValue}}}
+#define CALCULATE_COLOR_VALUE 1
 
 vec3 hsv2rgb(vec3 c)
 {
@@ -39,7 +39,6 @@ vec3 calculateColor(int i) {
 
 void main() {
   vec2 coord = u_min2 + gl_FragCoord.xy * u_scalingFactor;
-
   vec3 color = vec3(0.0);
   float zx = 0.0, zy = 0.0;
   for (int i = 0; i < 1000; i++) {

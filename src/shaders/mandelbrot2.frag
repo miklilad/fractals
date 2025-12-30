@@ -4,7 +4,8 @@ uniform vec3 u_position;
 uniform vec2 u_scalingFactor;
 uniform vec2 u_min2;
 
-#define CALCULATE_COLOR_VALUE {{{calculateColorValue}}}
+#define CALCULATE_COLOR_VALUE 1
+#define SHOW_AXIS 1
 
 vec3 hsv2rgb(vec3 c)
 {
@@ -53,4 +54,12 @@ void main() {
     z.x = xtemp;
   }
   gl_FragColor = vec4(color, 1.0);
+#if SHOW_AXIS == 1
+  if (abs(coord.x) < u_scalingFactor.x) {
+    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+  }
+  if (abs(coord.y) < u_scalingFactor.y) {
+    gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+  }
+#endif
 }

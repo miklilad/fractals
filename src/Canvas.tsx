@@ -53,22 +53,29 @@ const createProgram = (
 };
 
 // Initialize WebGL with shaders and buffers
-const initWebGL = (
-  canvas: HTMLCanvasElement,
-  fragmentShaderSource: string,
-  calculateColorValue: 0 | 1
-) => {
+const initWebGL = ({
+  canvas,
+  fragmentShaderSource,
+  calculateColorValue,
+  showAxis,
+}: {
+  canvas: HTMLCanvasElement;
+  fragmentShaderSource: string;
+  calculateColorValue: boolean;
+  showAxis: boolean;
+}) => {
   const gl = canvas.getContext("webgl");
   if (!gl) {
     console.error("WebGL not supported");
     return;
   }
 
-  const fragmentShaderSourcePreprocessed = fragmentShaderSource.replace(
-    "{{{calculateColorValue}}}",
-    calculateColorValue.toString()
-  );
-
+  const fragmentShaderSourcePreprocessed = fragmentShaderSource
+    .replace(
+      "#define CALCULATE_COLOR_VALUE 1",
+      `#define CALCULATE_COLOR_VALUE ${calculateColorValue ? 1 : 0}`
+    )
+    .replace("#define SHOW_AXIS 1", `#define SHOW_AXIS ${showAxis ? 1 : 0}`);
   // Create shaders
   const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
   const fragmentShader = createShader(
@@ -92,16 +99,6 @@ const initWebGL = (
     3.0,
     -3.0, // bottom right vertex
   ]);
-
-  // // Triangle vertices (x, y) in clip space
-  // const positions = new Float32Array([
-  //   0.0,
-  //   1.0, // top vertex
-  //   -1.0,
-  //   -1.0, // bottom left vertex
-  //   1.0,
-  //   -1.0, // bottom right vertex
-  // ]);
 
   const positionBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -182,7 +179,8 @@ export const Canvas = () => {
   const [fragmentShaderIndex, setFragmentShaderIndex] = useState(
     CONFIG[fractal].defaultFragmentShaderIndex
   );
-  const [calculateColorValue, setCalculateColorValue] = useState<0 | 1>(0);
+  const [calculateColorValue, setCalculateColorValue] = useState(false);
+  const [showAxis, setShowAxis] = useState(false);
   const [positionIndex, setPositionIndex] = useState(0);
   const [position, setPosition] = useState(
     CONFIG[fractal].positions[positionIndex]
@@ -200,11 +198,13 @@ export const Canvas = () => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    contextRef.current = initWebGL(
+    contextRef.current = initWebGL({
       canvas,
-      CONFIG[fractal].fragmentShaders[fragmentShaderIndex],
-      calculateColorValue
-    );
+      fragmentShaderSource:
+        CONFIG[fractal].fragmentShaders[fragmentShaderIndex],
+      calculateColorValue,
+      showAxis,
+    });
     if (!contextRef.current) return;
     render({
       context: contextRef.current,
@@ -213,7 +213,13 @@ export const Canvas = () => {
       height: canvas.height,
       juliaConstant,
     });
-  }, [fragmentShaderIndex, calculateColorValue, positionIndex, fractal]);
+  }, [
+    fragmentShaderIndex,
+    calculateColorValue,
+    positionIndex,
+    fractal,
+    showAxis,
+  ]);
 
   useMouseMovement({ setPosition, canvasRef });
 
@@ -245,7 +251,15 @@ export const Canvas = () => {
   const hasCalculateColorValue = useMemo(
     () =>
       CONFIG[fractal].fragmentShaders[fragmentShaderIndex].includes(
-        "{{{calculateColorValue}}}"
+        "#define CALCULATE_COLOR_VALUE"
+      ),
+    [fragmentShaderIndex, fractal]
+  );
+
+  const hasShowAxis = useMemo(
+    () =>
+      CONFIG[fractal].fragmentShaders[fragmentShaderIndex].includes(
+        "#define SHOW_AXIS"
       ),
     [fragmentShaderIndex, fractal]
   );
@@ -314,13 +328,21 @@ export const Canvas = () => {
           <p>
             <button
               className="my-1 rounded-md bg-gray-800 p-1 text-white"
-              onClick={() =>
-                setCalculateColorValue(calculateColorValue === 0 ? 1 : 0)
-              }
+              onClick={() => setCalculateColorValue(!calculateColorValue)}
             >
-              {calculateColorValue === 0
+              {!calculateColorValue
                 ? "Legacy color value"
                 : "Color value with drop off"}
+            </button>
+          </p>
+        )}
+        {hasShowAxis && (
+          <p>
+            <button
+              className="my-1 rounded-md bg-gray-800 p-1 text-white"
+              onClick={() => setShowAxis(!showAxis)}
+            >
+              {showAxis ? "Show axis" : "Hide axis"}
             </button>
           </p>
         )}
