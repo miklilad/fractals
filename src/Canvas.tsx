@@ -187,6 +187,7 @@ export const Canvas = () => {
   const [position, setPosition] = useState(
     CONFIG[fractal].positions[positionIndex]
   );
+  const [hideGui, setHideGui] = useState(false);
   const [juliaConstant, setJuliaConstant] = useState<{ x: number; y: number }>({
     x: 0.3,
     y: -0.47,
@@ -235,6 +236,19 @@ export const Canvas = () => {
   ]);
 
   useMouseMovement({ setPosition, canvasRef });
+
+  // Handle F10 key to toggle GUI visibility
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "F10") {
+        event.preventDefault();
+        setHideGui(prev => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Handle resize and render
   useEffect(() => {
@@ -300,97 +314,101 @@ export const Canvas = () => {
         isFrozen={isFrozen}
         toggleFrozen={toggleFrozen}
       />
-      <div className="absolute top-0 left-0 bg-black/50 p-4 text-white">
-        <p>FPS: {fps}</p>
-        <p>x: {position.x.toFixed(majorDigits)}</p>
-        <p>y: {position.y.toFixed(majorDigits)}</p>
-        <p
-          data-tooltip-id="z-tooltip"
-          data-tooltip-content="The z-axis is the depth of the scene. Twice the z value is how much your screen covers on x-axis"
-        >
-          z: {position.z.toFixed(majorDigits)}
-        </p>
-        <Tooltip id="z-tooltip" />
-        {isIterationPathEnabled && fractal === "mandelbrot" && (
-          <p className="mt-2 font-bold text-green-400">
-            🎯 Iteration Path {isFrozen ? "(Frozen)" : "(Active)"}
-          </p>
-        )}
-      </div>
-      <div className="absolute top-0 right-0 flex flex-col items-end bg-black/50 p-4 text-white">
-        <p>
-          <button
-            className="my-1 rounded-md bg-gray-800 p-1 text-white"
-            onClick={handleFractalChange}
+      {!hideGui && (
+        <div className="absolute top-0 left-0 bg-black/50 p-4 text-white">
+          <p>FPS: {fps}</p>
+          <p>x: {position.x.toFixed(majorDigits)}</p>
+          <p>y: {position.y.toFixed(majorDigits)}</p>
+          <p
+            data-tooltip-id="z-tooltip"
+            data-tooltip-content="The z-axis is the depth of the scene. Twice the z value is how much your screen covers on x-axis"
           >
-            {`${fractal === "mandelbrot" ? "Mandelbrot" : "Julia"}`}
-          </button>
-        </p>
-        {CONFIG[fractal].positions.length > 1 && (
+            z: {position.z.toFixed(majorDigits)}
+          </p>
+          <Tooltip id="z-tooltip" />
+          {isIterationPathEnabled && fractal === "mandelbrot" && (
+            <p className="mt-2 font-bold text-green-400">
+              🎯 Iteration Path {isFrozen ? "(Frozen)" : "(Active)"}
+            </p>
+          )}
+        </div>
+      )}
+      {!hideGui && (
+        <div className="absolute top-0 right-0 flex flex-col items-end bg-black/50 p-4 text-white">
           <p>
             <button
               className="my-1 rounded-md bg-gray-800 p-1 text-white"
-              onClick={() =>
-                setPositionIndex(
-                  (positionIndex + 1) % CONFIG[fractal].positions.length
-                )
-              }
+              onClick={handleFractalChange}
             >
-              {`Position ${positionIndex + 1}`}
+              {`${fractal === "mandelbrot" ? "Mandelbrot" : "Julia"}`}
             </button>
           </p>
-        )}
-        {CONFIG[fractal].fragmentShaders.length > 1 && (
-          <p>
-            <button
-              className="my-1 rounded-md bg-gray-800 p-1 text-white"
-              onClick={() =>
-                setFragmentShaderIndex(
-                  (fragmentShaderIndex + 1) %
-                    CONFIG[fractal].fragmentShaders.length
-                )
-              }
-            >
-              {`Fragment Shader ${fragmentShaderIndex + 1}`}
-            </button>
-          </p>
-        )}
-        {hasCalculateColorValue && (
-          <p>
-            <button
-              className="my-1 rounded-md bg-gray-800 p-1 text-white"
-              onClick={() => setCalculateColorValue(!calculateColorValue)}
-            >
-              {!calculateColorValue
-                ? "Legacy color value"
-                : "Color value with drop off"}
-            </button>
-          </p>
-        )}
-        {hasShowAxis && (
-          <p>
-            <button
-              className="my-1 rounded-md bg-gray-800 p-1 text-white"
-              onClick={() => setShowAxis(!showAxis)}
-            >
-              {!showAxis ? "Show axis" : "Hide axis"}
-            </button>
-          </p>
-        )}
-        {fractal === "mandelbrot" && (
-          <p>
-            <button
-              className="my-1 rounded-md bg-gray-800 p-1 text-white"
-              onClick={toggleIterationPath}
-            >
-              {isIterationPathEnabled
-                ? "Hide Iteration Path"
-                : "Show Iteration Path"}
-            </button>
-          </p>
-        )}
-      </div>
-      {fractal === "julia" && (
+          {CONFIG[fractal].positions.length > 1 && (
+            <p>
+              <button
+                className="my-1 rounded-md bg-gray-800 p-1 text-white"
+                onClick={() =>
+                  setPositionIndex(
+                    (positionIndex + 1) % CONFIG[fractal].positions.length
+                  )
+                }
+              >
+                {`Position ${positionIndex + 1}`}
+              </button>
+            </p>
+          )}
+          {CONFIG[fractal].fragmentShaders.length > 1 && (
+            <p>
+              <button
+                className="my-1 rounded-md bg-gray-800 p-1 text-white"
+                onClick={() =>
+                  setFragmentShaderIndex(
+                    (fragmentShaderIndex + 1) %
+                      CONFIG[fractal].fragmentShaders.length
+                  )
+                }
+              >
+                {`Fragment Shader ${fragmentShaderIndex + 1}`}
+              </button>
+            </p>
+          )}
+          {hasCalculateColorValue && (
+            <p>
+              <button
+                className="my-1 rounded-md bg-gray-800 p-1 text-white"
+                onClick={() => setCalculateColorValue(!calculateColorValue)}
+              >
+                {!calculateColorValue
+                  ? "Legacy color value"
+                  : "Color value with drop off"}
+              </button>
+            </p>
+          )}
+          {hasShowAxis && (
+            <p>
+              <button
+                className="my-1 rounded-md bg-gray-800 p-1 text-white"
+                onClick={() => setShowAxis(!showAxis)}
+              >
+                {!showAxis ? "Show axis" : "Hide axis"}
+              </button>
+            </p>
+          )}
+          {fractal === "mandelbrot" && (
+            <p>
+              <button
+                className="my-1 rounded-md bg-gray-800 p-1 text-white"
+                onClick={toggleIterationPath}
+              >
+                {isIterationPathEnabled
+                  ? "Hide Iteration Path"
+                  : "Show Iteration Path"}
+              </button>
+            </p>
+          )}
+        </div>
+      )}
+      {!hideGui && fractal === "julia" && (
         <>
           <div className="absolute bottom-5 flex w-full justify-center">
             <Slider
